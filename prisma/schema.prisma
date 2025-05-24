@@ -33,10 +33,10 @@ model User {
 
   testimonials Testimonial?
 
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  CourseReview CourseReview[]
-  CourseEnroll CourseEnroll[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  courseReviews CourseReview[]
+  courseEnrolls CourseEnroll[]
 
   @@map("users")
 }
@@ -115,8 +115,8 @@ model Subject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  chapters     Chapter[]
-  CourseEnroll CourseEnroll[]
+  chapters      Chapter[]
+  courseEnrolls CourseEnroll[]
 
   @@map("subjects")
 }
@@ -138,8 +138,8 @@ model Chapter {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  podcast      Podcast[]
-  CourseReview CourseReview[]
+  podcasts      Podcast[]
+  courseReviews CourseReview[]
 
   // all steps
   stepOne   StepOne?
@@ -149,8 +149,8 @@ model Chapter {
   stepFive  StepFive?
   stepSix   StepSix?
   stepSeven StepSeven?
-  stepEight StepEight[]
-  StepNine  StepNine?
+  stepEight StepEight?
+  stepNine  StepNine?
 
   @@map("chapters")
 }
@@ -259,7 +259,7 @@ model StepSix {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("stepsix")
+  @@map("stepSix")
 }
 
 model StepSeven {
@@ -277,7 +277,7 @@ model StepSeven {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("stepsSeven")
+  @@map("stepSeven")
 }
 
 model StepEight {
@@ -285,7 +285,7 @@ model StepEight {
 
   isVisible Boolean @default(false)
 
-  chapterId String
+  chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   questionType        String
@@ -295,8 +295,6 @@ model StepEight {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   stepEightQuizzes StepEightQuiz[]
-  StepNine         StepNine?       @relation(fields: [stepNineId], references: [id])
-  stepNineId       String?
 
   @@map("stepEight")
 }
@@ -329,9 +327,8 @@ model StepNine {
   stepDescription String
   stepVideo       String
 
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  StepEight StepEight[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("stepNine")
 }
@@ -379,12 +376,12 @@ model CourseReview {
   id String @id @default(cuid())
 
   chapterId String
-  useId     String
+  userId    String
   rating    Int    @default(1)
   message   String
 
   chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [useId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

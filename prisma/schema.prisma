@@ -124,6 +124,9 @@ model Subject {
 model Chapter {
   id String @id @default(cuid())
 
+  sLNumber  String  @unique // 1
+  isVisible Boolean @default(false) // update hobe jokhnon sob step isCompleted: true hobe
+
   subjectId String
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
@@ -155,6 +158,8 @@ model Chapter {
 model StepOne {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(true)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -171,6 +176,8 @@ model StepOne {
 model StepTwo {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(false)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -185,6 +192,8 @@ model StepTwo {
 
 model StepThree {
   id String @id @default(cuid())
+
+  isVisible Boolean @default(false)
 
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -202,6 +211,8 @@ model StepThree {
 model StepFour {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(false)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -217,6 +228,8 @@ model StepFour {
 
 model StepFive {
   id String @id @default(cuid())
+
+  isVisible Boolean @default(false)
 
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -234,6 +247,8 @@ model StepFive {
 model StepSix {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(false)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -250,6 +265,8 @@ model StepSix {
 model StepSeven {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(false)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -265,6 +282,8 @@ model StepSeven {
 
 model StepEight {
   id String @id @default(cuid())
+
+  isVisible Boolean @default(false)
 
   chapterId String
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -301,6 +320,8 @@ model StepEightQuiz {
 model StepNine {
   id String @id @default(cuid())
 
+  isVisible Boolean @default(false)
+
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
@@ -326,11 +347,11 @@ model CourseEnroll {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name        String
-  phoneNumber String
-  email       String
-  otp         String
-  isVarified  Boolean @default(false)
+  name         String
+  phoneNumber  String
+  email        String
+  otp          String?
+  otpExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

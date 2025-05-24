@@ -38,6 +38,10 @@ model User {
   courseReviews CourseReview[]
   courseEnrolls CourseEnroll[]
 
+  // user step progress
+  userStepProgress    UserStepProgress?
+  userChapterProgress UserChapterProgress?
+
   @@map("users")
 }
 
@@ -124,8 +128,7 @@ model Subject {
 model Chapter {
   id String @id @default(cuid())
 
-  sLNumber  String  @unique // 1
-  isVisible Boolean @default(false) // update hobe jokhnon sob step isCompleted: true hobe
+  sLNumber String @unique // 1
 
   subjectId String
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -152,13 +155,15 @@ model Chapter {
   stepEight StepEight?
   stepNine  StepNine?
 
+  // student
+  userStepProgress    UserStepProgress?
+  userChapterProgress UserChapterProgress?
+
   @@map("chapters")
 }
 
 model StepOne {
   id String @id @default(cuid())
-
-  isVisible Boolean @default(true)
 
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -166,6 +171,8 @@ model StepOne {
   stepName        String
   stepDescription String?
   stepVideo       String
+
+  type StepType @default(STEP_ONE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -176,13 +183,13 @@ model StepOne {
 model StepTwo {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   podcastName  String
   podcastVideo String[]
+
+  type StepType @default(STEP_TWO)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,14 +200,14 @@ model StepTwo {
 model StepThree {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName        String
   stepDescription String
   stepVideo       String
+
+  type StepType @default(STEP_THREE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -211,14 +218,14 @@ model StepThree {
 model StepFour {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName        String
   stepDescription String
   stepVideo       String
+
+  type StepType @default(STEP_FOUR)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,14 +236,14 @@ model StepFour {
 model StepFive {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName       String
   stepVideo      String
   questionAnswer Json
+
+  type StepType @default(STEP_FIVE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -247,14 +254,14 @@ model StepFive {
 model StepSix {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName        String
   stepDescription String
   stepVideo       String
+
+  type StepType @default(STEP_SIX)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -265,14 +272,14 @@ model StepSix {
 model StepSeven {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName        String
   stepDescription String
   stepVideo       String
+
+  type StepType @default(STEP_SEVEN)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -283,14 +290,14 @@ model StepSeven {
 model StepEight {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   questionType        String
   questionDescription String
   isDisable           Boolean @default(false)
+
+  type StepType @default(STEP_EIGHT)
 
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -318,14 +325,14 @@ model StepEightQuiz {
 model StepNine {
   id String @id @default(cuid())
 
-  isVisible Boolean @default(false)
-
   chapterId String  @unique
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   stepName        String
   stepDescription String
   stepVideo       String
+
+  type StepType @default(STEP_NINE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -387,4 +394,52 @@ model CourseReview {
   updatedAt DateTime @updatedAt
 
   @@map("courseReviews")
+}
+
+enum StepType {
+  STEP_ONE
+  STEP_TWO
+  STEP_THREE
+  STEP_FOUR
+  STEP_FIVE
+  STEP_SIX
+  STEP_SEVEN
+  STEP_EIGHT
+  STEP_NINE
+}
+
+model UserChapterProgress {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  chapterId String  @unique
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  isCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("userChapterProgress")
+}
+
+model UserStepProgress {
+  id String @id @default(cuid())
+
+  userId    String @unique
+  chapterId String @unique
+
+  stepId      String   @unique // ex: stepOneId
+  stepType    StepType @unique // ex: STEP_ONE
+  isCompleted Boolean  @default(false)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("userStepProgress")
 }

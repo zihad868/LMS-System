@@ -8,7 +8,9 @@ import emailSender from "../../../helpars/emailSender/emailSender";
 import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import prisma from "../../../shared/prisma";
 import { IUser } from "./course.interface";
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { paginationHelpers } from "../../../helpars/paginationHelper";
 
 
 const courseDetails = async (subjectId: string) => {
@@ -33,7 +35,7 @@ const courseDetails = async (subjectId: string) => {
       },
       chapters: {
         select: {
-          CourseReview: { select: { rating: true } },
+          courseReviews: { select: { rating: true } },
         },
       },
     },
@@ -44,7 +46,7 @@ const courseDetails = async (subjectId: string) => {
   let totalReviews = 0;
   if (ratingData) {
     const allRatings = ratingData.chapters.flatMap((chapter) =>
-      chapter.CourseReview.map((review) => review.rating)
+      chapter.courseReviews.map((review) => review.rating)
     );
 
     totalReviews = allRatings.length;
@@ -122,7 +124,7 @@ const getCourseReview = async (subjectId: string) => {
     select: {
       chapters: {
         select: {
-          CourseReview: {
+          courseReviews: {
             orderBy: {
               createdAt: "desc",
             },
@@ -148,7 +150,7 @@ const getCourseReview = async (subjectId: string) => {
   // Flatten all reviews into array of objects
   const reviews = courseData.flatMap((course) =>
     course.chapters.flatMap((chapter) =>
-      chapter.CourseReview.map((review) => ({
+      chapter.courseReviews.map((review) => ({
         name: `${review.user.firstName} ${review.user.lastName}`,
         email: review.user.email,
         profile: review.user.profile,
@@ -189,26 +191,6 @@ const createCourseEnroll = async (entrollData: any) => {
   const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
   const html = otpEmail(randomOtp);
 
-  if (existingEnroll) {
-    if (existingEnroll.isVarified) {
-      throw new ApiError(httpStatus.CONFLICT, "User already enrolled in this chapter");
-    }
-
-   
-    await prisma.courseEnroll.update({
-      where: { id: existingEnroll.id },
-      data: { otp: randomOtp }, 
-    });
-
-    await emailSender("OTP", existingEnroll.email, html);
-
-    return {
-      id: user.id,
-      email: existingEnroll.email,
-       courseId: existingEnroll.subjectId,
-      message: "OTP resent! Please verify your email to complete enrollment.",
-    };
-  }
 
   // Fresh enrollment
   const newEnroll = await prisma.courseEnroll.create({
@@ -260,20 +242,11 @@ const enrollVerification = async (data: {
     throw new ApiError(httpStatus.NOT_FOUND, "Enrollment not found");
   }
 
-  if (enrollment.isVarified) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "You have already verified");
-  }
 
   if (enrollment.otp !== data.otp) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
   }
 
-  await prisma.courseEnroll.update({
-    where: { id: enrollment.id },
-    data: {
-      isVarified: true,
-    },
-  });
 
   return {
     success: true,
@@ -292,7 +265,7 @@ const checkingEnrollment = async (userId: string, subjectId: string): Promise<bo
   });
 
   // If not enrolled or not verified, return false
-  if (!enroll || !enroll.isVarified) {
+  if (!enroll) {
     return false;
   }
 
@@ -302,6 +275,62 @@ const checkingEnrollment = async (userId: string, subjectId: string): Promise<bo
 
 
 
+const getAllCourseReview = async (
+  filters: {
+    searchTerm?: string;
+  },
+  options: IPaginationOptions
+) => {
+  const { searchTerm } = filters;
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelpers.calculatePagination(options);
+
+  const andConditions = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: ["title", "category"].map((field) => ({
+        [field]: {
+          contains: searchTerm,
+          mode: "insensitive",
+        },
+      })),
+    });
+  }
+
+  const whereConditions: Prisma.CourseReviewWhereInput = {
+    AND: [...andConditions,],
+  };
+
+  const blogs = await prisma.courseReview.findMany({
+    where: {
+      ...whereConditions,
+    },
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? { [sortBy]: sortOrder }
+        : {
+            createdAt: "desc",
+          },
+  });
+
+  const total = await prisma.courseReview.count({
+    where: {
+      ...whereConditions,
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: blogs,
+  };
+};
 
 export const CourseService = {
   courseDetails,
@@ -309,5 +338,6 @@ export const CourseService = {
   getCourseReview,
   createCourseEnroll,
   enrollVerification,
-  checkingEnrollment
+  checkingEnrollment,
+  getAllCourseReview
 };

@@ -41,6 +41,18 @@ const getAllSubjects = async () => {
   return { subject };
 };
 
+const classWiseSubject = async (classId: string) => {
+  const subject = await prisma.subject.findMany({
+    where: {
+      classId: classId,
+    },
+  });
+
+  
+
+  return { subject };
+};
+
 const updatevisibility = async (subjectId: string, isVisible: boolean) => {
   const subject = await prisma.subject.findUnique({
     where: {
@@ -120,9 +132,9 @@ const subjectWiseChapter = async (
     },
     skip,
     take: limit,
-    orderBy: {
-      [sortBy || "createdAt"]: sortOrder || "asc",
-    },
+    // orderBy: {
+    //   [sortBy || "createdAt"]: sortOrder || "asc",
+    // },
   });
 
   const total = await prisma.chapter.count({
@@ -144,4 +156,5 @@ export const SubjectService = {
   updatevisibility,
   getAllSubjects,
   subjectWiseChapter,
+  classWiseSubject
 };

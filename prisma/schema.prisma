@@ -13,6 +13,11 @@ enum UserRole {
   ADMIN
 }
 
+enum EnrollStatus {
+  SUCCESS
+  PENDING
+}
+
 model User {
   id String @id @default(cuid())
 
@@ -33,13 +38,15 @@ model User {
 
   testimonials Testimonial?
 
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  CourseReview         CourseReview[]
-  CourseEnroll         CourseEnroll[]
-  StepEightQuizAttempt StepEightQuizAttempt[]
-  UserChapterProgress  UserChapterProgress?
-  UserStepProgress     UserStepProgress?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  courseReviews CourseReview[]
+  courseEnrolls CourseEnroll[]
+
+  // user step progress
+  userStepProgress      UserStepProgress?
+  userChapterProgress   UserChapterProgress[]
+  stepEightQuizAttempts StepEightQuizAttempt[]
 
   @@map("users")
 }
@@ -127,7 +134,7 @@ model Subject {
 model Chapter {
   id String @id @default(cuid())
 
-  sLNumber String @unique // 1
+  sLNumber String // 1
 
   subjectId String
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -151,13 +158,14 @@ model Chapter {
   stepFive  StepFive?
   stepSix   StepSix?
   stepSeven StepSeven?
-  stepEight StepEight?
+  stepEight StepEight[]
   stepNine  StepNine?
 
   // student
   userStepProgress    UserStepProgress?
-  userChapterProgress UserChapterProgress?
+  userChapterProgress UserChapterProgress[]
 
+  @@unique([subjectId, sLNumber]) // Ensure unique chapter per subject based on sLNumber
   @@map("chapters")
 }
 
@@ -289,7 +297,7 @@ model StepSeven {
 model StepEight {
   id String @id @default(cuid())
 
-  chapterId String  @unique
+  chapterId String
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   questionType        String
@@ -371,9 +379,9 @@ model CourseEnroll {
 
   name         String
   phoneNumber  String
-  email        String
   otp          String?
   otpExpiresAt DateTime?
+  enrollStatus EnrollStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,17 +437,18 @@ enum StepType {
 model UserChapterProgress {
   id String @id @default(cuid())
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  chapterId String
 
-  chapterId String  @unique
-  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   isCompleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, chapterId]) // Ensures each user-chapter pair is unique
   @@map("userChapterProgress")
 }
 
